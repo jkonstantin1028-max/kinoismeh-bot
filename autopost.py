@@ -11,22 +11,12 @@ CHAT_ID = os.getenv("CHAT_ID") or "-1003912998089"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# тільки розважальні джерела
+# тільки перевірені робочі джерела
 rss_sources = [
-    "https://rozdil.lviv.ua/rss",
-    "https://karabas.live/rss",
-    "https://musicukraine.com/rss",
-    "https://kinomania.org.ua/rss",
-    "https://rsshub.app/telegram/channel/anekdoty_ua",
-    "https://rsshub.app/telegram/channel/ukr_memes",
-    "https://rsshub.app/telegram/channel/xydessa",
-    "https://rsshub.app/telegram/channel/fmupl",
-    "https://rsshub.app/telegram/channel/kino_fan_ua",
-    "https://rsshub.app/telegram/channel/kinoman_ua",
-    "https://rsshub.app/telegram/channel/muzika_ua",
-    "https://rsshub.app/youtube/channel/UC7ZyqkR2BAMPER",   # BAMPER TV
-    "https://rsshub.app/youtube/channel/UCkolegiStudio",   # Kolegi Studio
-    "https://rsshub.app/youtube/channel/UCchistoNews"      # Чисто News
+    "https://rozdil.lviv.ua/rss",     # анекдоти
+    "https://karabas.live/rss",       # концерти, культура
+    "https://musicukraine.com/rss",   # музика
+    "https://kinomania.org.ua/rss"    # кіно
 ]
 
 # стоп-слова для виключення політики
@@ -54,19 +44,7 @@ def publish_entry(entry):
         emoji = random.choice(emojis)
         text = f"{emoji} {title}"
 
-        # пробуємо картинку
-        try:
-            if hasattr(entry, "media_content") and entry.media_content:
-                img_url = entry.media_content[0].get("url")
-                if img_url:
-                    bot.send_photo(chat_id=CHAT_ID, photo=img_url, caption=text)
-                    print("Опубліковано пост з картинкою:", title)
-                    posted_titles.add(title)
-                    return
-        except Exception as e:
-            print("Помилка картинки:", e)
-
-        # fallback — тільки текст
+        # fallback — тільки текст (сайти не дають картинок)
         bot.send_message(chat_id=CHAT_ID, text=text)
         posted_titles.add(title)
         print("Опубліковано пост:", title)
@@ -82,7 +60,7 @@ def publish_first_news():
         print("RSS пустий при старті:", source)
 
 def check_rss():
-    sources = random.sample(rss_sources, k=3)
+    sources = random.sample(rss_sources, k=len(rss_sources))
     for source in sources:
         feed = feedparser.parse(source)
         if feed.entries:
@@ -105,4 +83,5 @@ schedule.every().hour.do(schedule_random)
 while True:
     schedule.run_pending()
     time.sleep(1)
+
 
