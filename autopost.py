@@ -13,27 +13,26 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 # тільки розважальні джерела
 rss_sources = [
-    "https://rsshub.app/telegram/channel/ukr_memes",
-    "https://rsshub.app/telegram/channel/anekdoty_ua",
-    "https://rsshub.app/telegram/channel/kino_fan_ua",
-    "https://rsshub.app/telegram/channel/ukrainian_music",
-    "https://rsshub.app/telegram/channel/muzika_ua",
-    "https://rsshub.app/telegram/channel/xydessa",
-    "https://rsshub.app/telegram/channel/fmupl",
-    "https://rsshub.app/telegram/channel/kinoman_ua",
+    "https://rozdil.lviv.ua/rss",
     "https://karabas.live/rss",
     "https://musicukraine.com/rss",
-    "https://anekdoty.com.ua/rss",
-    "https://rozdil.lviv.ua/rss"
+    "https://kinomania.org.ua/rss",
+    "https://rsshub.app/telegram/channel/anekdoty_ua",
+    "https://rsshub.app/telegram/channel/ukr_memes",
+    "https://rsshub.app/telegram/channel/xydessa",
+    "https://rsshub.app/telegram/channel/fmupl",
+    "https://rsshub.app/telegram/channel/kino_fan_ua",
+    "https://rsshub.app/telegram/channel/kinoman_ua",
+    "https://rsshub.app/telegram/channel/muzika_ua",
+    "https://rsshub.app/youtube/channel/UC7ZyqkR2BAMPER",   # BAMPER TV
+    "https://rsshub.app/youtube/channel/UCkolegiStudio",   # Kolegi Studio
+    "https://rsshub.app/youtube/channel/UCchistoNews"      # Чисто News
 ]
 
 # стоп-слова для виключення політики
 stop_words = ["політика", "президент", "вибори", "парламент", "уряд", "війна", "закон", "рада"]
 
-# пам'ять для унікальних постів
 posted_titles = set()
-
-# емодзі для різноманітності
 emojis = ["😂", "🤣", "🎬", "🎵", "🔥", "😎", "🎭", "📺", "🎤"]
 
 def clean_text(text: str) -> str:
@@ -79,6 +78,8 @@ def publish_first_news():
     feed = feedparser.parse(source)
     if feed.entries:
         publish_entry(feed.entries[0])
+    else:
+        print("RSS пустий при старті:", source)
 
 def check_rss():
     sources = random.sample(rss_sources, k=3)
@@ -87,11 +88,11 @@ def check_rss():
         if feed.entries:
             entry = random.choice(feed.entries[:5])
             publish_entry(entry)
+        else:
+            print("RSS пустий:", source)
 
-# одразу при запуску
 publish_first_news()
 
-# випадковий інтервал між 10 і 20 хвилинами
 def schedule_random():
     schedule.clear('rss')
     minutes = random.randint(10, 20)
