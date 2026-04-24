@@ -1,56 +1,41 @@
-import feedparser
+import os
 import time
 import requests
+import schedule
+import feedparser
+import telebot
 
-BOT_TOKEN = "ВАШ_ТОКЕН"
-CHAT_ID = "@Kinoismeh"
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "8745612357:AAFQOPh0-WY0yr1VeVhYmUHCeNcPDsDgviA"
+CHAT_ID = os.getenv("CHAT_ID") or "-1003912998089"
 
-# Украинские развлекательные источники
-rss_sources = [
-    "https://www.ukrinform.ua/rss",
-    "https://tsn.ua/rss",
-    "https://espreso.tv/rss",
-    "https://detector.media/rss",
-    "https://zaxid.net/rss",
-    "https://anekdotua.com/rss",
-    "https://karabas.live/rss",
-    "https://musicukraine.com/rss"
-]
+bot = telebot.TeleBot(BOT_TOKEN)
 
-# Список для отслеживания уже опубликованных постов
-posted_links = set()
+def publish_test():
+    try:
+        text = "🚀 Проверка публикации: бот работает!"
+        bot.send_message(chat_id=CHAT_ID, text=text)
+        print("Опубликован тестовый пост:", text)
+    except Exception as e:
+        print("Ошибка при публикации:", e)
 
-# Слова, которые нужно исключить (чтобы убрать политику)
-ban_words = ["политика", "війна", "правительство", "влада"]
+def check_rss():
+    try:
+        feed = feedparser.parse("https://www.film.ru/rss_news")
+        if feed.entries:
+            entry = feed.entries[0]
+            post_text = f"{entry.title}\n{entry.link}"
+            bot.send_message(chat_id=CHAT_ID, text=post_text)
+            print("Опубликован пост:", entry.title)
+    except Exception as e:
+        print("Ошибка при публикации RSS:", e)
 
-def is_allowed(text):
-    return not any(word in text.lower() for word in ban_words)
+# сразу публикуем тестовый пост при старте
+publish_test()
 
-def format_post(entry):
-    # Берём только заголовок и описание, без ссылки
-    return f"{entry.title}\n\n{entry.summary}"
+# каждые 15 минут проверка RSS
+schedule.every(15).minutes.do(check_rss)
 
-def send_message(text):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    data = {"chat_id": CHAT_ID, "text": text}
-    requests.post(url, data=data)
+while True:
+    schedule.run_pending()
+    time.sleep(1)
 
-def check_feeds():
-    for source in rss_sources:
-        feed = feedparser.parse(source)
-        # Ограничиваем количество постов за раз (например, 3)
-        for entry in feed.entries[:3]:
-            if entry.link in posted_links:
-                continue
-            text = format_post(entry)
-            if is_allowed(text):
-                send_message(text)
-                posted_links.add(entry.link)
-                # Ограничиваем память до 500 ссылок
-                if len(posted_links) > 500:
-                    posted_links.pop()
-
-if __name__ == "__main__":
-    while True:
-        check_feeds()
-        time.sleep(600)  # проверка каждые 10 минут
